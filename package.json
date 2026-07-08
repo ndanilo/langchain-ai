@@ -1,0 +1,28 @@
+{
+  "name": "langchain-ai",
+  "version": "1.0.0",
+  "description": "Study workspace for LangChain, LangGraph, and LangSmith with Node.js and TypeScript",
+  "homepage": "https://github.com/ndanilo/langchain-ai#readme",
+  "bugs": {
+    "url": "https://github.com/ndanilo/langchain-ai/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ndanilo/langchain-ai.git"
+  },
+  "license": "ISC",
+  "author": "Danilo",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.0"
+  }
+}

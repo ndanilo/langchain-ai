@@ -1,0 +1,15 @@
+---
+description: LangChain / LangGraph / LangSmith patterns for experiments
+globs: examples/**/*
+alwaysApply: false
+---
+
+# LangChain ecosystem
+
+- Use `@langchain/core` for prompts, messages, and runnables
+- Install provider packages only when needed (`@langchain/openai`, etc.)
+- Enable LangSmith tracing via env vars (`LANGCHAIN_TRACING_V2`, `LANGCHAIN_API_KEY`, `LANGCHAIN_PROJECT`)
+- Prefer structured output (Zod schemas) over parsing free-form text when the task allows
+- For multi-step or branching logic, reach for LangGraph instead of ad-hoc state machines
+
+When adding tools or API integrations, keep each tool focused on one action and document its inputs/outputs.

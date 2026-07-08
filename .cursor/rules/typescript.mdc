@@ -1,0 +1,27 @@
+---
+description: TypeScript and Node.js conventions for this repo
+globs: **/*.ts
+alwaysApply: false
+---
+
+# TypeScript / Node.js
+
+- Use ESM imports (`import` / `export`), not `require`
+- Load env vars with `dotenv` at the entry point of each script
+- Prefer explicit types on public functions; let inference handle locals
+- Handle errors explicitly — log context, then rethrow or exit with a clear message
+- Run scripts with `npx tsx <file.ts>` — this project uses `tsx`, not `ts-node`
+
+```typescript
+// Entry point pattern
+import "dotenv/config";
+
+async function main() {
+  // ...
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
+```

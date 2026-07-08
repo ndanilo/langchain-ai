@@ -1,0 +1,37 @@
+---
+description: Project context and study-workspace conventions
+alwaysApply: true
+---
+
+# langchain-ai study workspace
+
+This repo is for learning the AI ecosystem (LangChain, LangGraph, LangSmith) with Node.js and TypeScript.
+
+## Approach
+
+- Keep each experiment small and self-contained under `examples/<name>/`
+- Build from scratch per topic — do not scaffold large apps unless asked
+- Prefer official LangChain.js / LangGraph.js patterns over custom abstractions
+- Use environment variables for API keys (never commit secrets)
+
+## When adding an experiment
+
+1. Create `examples/<descriptive-name>/index.ts`
+2. Add only the dependencies that experiment needs
+3. Document how to run it in a local `README.md` inside that folder (one-liner is fine)
+
+## Code style
+
+- TypeScript strict mode, ESM (`"type": "module"`)
+- Async/await over raw promises
+- Minimal scope — solve the learning goal, nothing extra
+
+## Runtime & commands
+
+- **Node 24** — pinned in `.nvmrc` and `package.json` engines (`>=24`)
+- Before installing or running scripts, use Node 24: `nvm use 24` (nvm-windows may not read `.nvmrc` with bare `nvm use`)
+- **Shell**: Windows PowerShell — chain commands with `;`, not `&&` (unless PS 7+)
+- **Run experiments**: `npx tsx examples/<name>/index.ts` (no build step needed)
+- **Project scripts**: `npm run typecheck`, `npm run build`
+- **Env**: copy `.env.example` → `.env`; load with `import "dotenv/config"` in entry files
+- Run install/test/run commands yourself — do not only tell the user to run them
