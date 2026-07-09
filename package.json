@@ -22,5 +22,12 @@
     "debug": "tsx watch --inspect src/index.ts",
     "build": "tsc",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@langchain/core": "^1.2.1",
+    "@langchain/langgraph": "^1.4.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1"
   }
 }

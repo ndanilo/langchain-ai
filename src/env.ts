@@ -24,6 +24,8 @@ const envSchema = z.object({
     LANGCHAIN_TRACING_V2: optionalBoolean.default(false),
     LANGCHAIN_API_KEY: optionalString,
     LANGCHAIN_PROJECT: z.string().min(1).default("langchain-ai"),
+    LANGSMITH_API_KEY: optionalString,
+    LANGSMITH_TRACING: optionalBoolean.default(false),
 });
 
 function parseEnv() {
