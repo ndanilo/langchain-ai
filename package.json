@@ -18,6 +18,7 @@
   },
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "langchain:server": "npx @langchain/langgraph-cli dev",
     "start": "npm run dev",
     "debug": "tsx watch --inspect src/index.ts",
     "build": "tsc",
@@ -25,7 +26,8 @@
   },
   "dependencies": {
     "@langchain/core": "^1.2.1",
-    "@langchain/langgraph": "^1.4.7"
+    "@langchain/langgraph": "^1.4.7",
+    "fastify": "^5.10.0"
   },
   "devDependencies": {
     "@types/node": "^26.1.1"

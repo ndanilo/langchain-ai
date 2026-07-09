@@ -31,3 +31,6 @@ coverage/
 # LangSmith / local caches
 .langchain/
 .cache/
+
+# LangGraph API
+.langgraph_api
