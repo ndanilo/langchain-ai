@@ -13,10 +13,10 @@ const configSchema = z.object({
 export type ConfigModelSchema = z.infer<typeof configSchema>;
 
 export const ConfigModel = configSchema.parse({
-    apiHost: "https://api.openai.com/v1",
+    apiHost: "https://openrouter.ai/api/v1",
     provider: "openai",
     apiKey: env.OPENAI_API_KEY,
-    model: "openai/gpt-oss-120b:free",
+    model: "nvidia/nemotron-3-ultra-550b-a55b:free",
     temperature: 0.7,
     maxTokens: undefined,
 });

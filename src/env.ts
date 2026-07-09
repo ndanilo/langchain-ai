@@ -19,6 +19,7 @@ const envSchema = z.object({
     NODE_ENV: z.enum(["development", "production", "test"])
     .default("development"),
 
+    OPENAI_ROUTER_API_KEY: optionalString,
     OPENAI_API_KEY: optionalString,
     ANTHROPIC_API_KEY: optionalString,
     LANGCHAIN_TRACING_V2: optionalBoolean.default(false),
