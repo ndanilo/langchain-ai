@@ -4,6 +4,7 @@ import { z } from "zod";
 const configSchema = z.object({
     provider: z.literal("openai"),
     apiKey: z.string().min(1),
+    apiHost: z.string().min(1),
     model: z.string().min(1),
     temperature: z.number().min(0).max(1),
     maxTokens: z.number().int().positive().optional(),
@@ -12,9 +13,10 @@ const configSchema = z.object({
 export type ConfigModelSchema = z.infer<typeof configSchema>;
 
 export const ConfigModel = configSchema.parse({
+    apiHost: "https://api.openai.com/v1",
     provider: "openai",
     apiKey: env.OPENAI_API_KEY,
-    model: "",
+    model: "openai/gpt-oss-120b:free",
     temperature: 0.7,
     maxTokens: undefined,
 });
