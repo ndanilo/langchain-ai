@@ -8,6 +8,7 @@ Part of the **Applied AI Engineering** course. A minimal LangChain.js integratio
 - `ChatOpenAI` via OpenRouter
 - A basic agent call (`createAgent` with no tools)
 - A hello-world LangGraph (uppercases the last message)
+- Unit tests with LangChain `fakeModel` (no API calls in tests)
 
 ## Prerequisites
 
@@ -33,6 +34,8 @@ cp .env.example .env     # then fill in your keys
 | `npm run langchain:server` | Start the LangGraph dev server |
 | `npm run typecheck` | Type-check without emit |
 | `npm run build` | Compile TypeScript |
+| `npm test` | Run unit tests (no real LLM calls) |
+| `npm run test:watch` | Run tests in watch mode |
 
 Run a single experiment:
 

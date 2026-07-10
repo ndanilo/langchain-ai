@@ -2,12 +2,13 @@ import { ConfigModel } from "../config/config.js";
 import { ChatOpenAI } from "@langchain/openai";
 import { createAgent } from "langchain";
 import { HumanMessage } from "@langchain/core/messages";
+import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 
 export class LLMService {
-    private llmClient: ChatOpenAI
+    private llmClient: BaseChatModel;
 
-    constructor() {
-        this.llmClient = new ChatOpenAI({
+    constructor(model?: BaseChatModel) {
+        this.llmClient = model ?? new ChatOpenAI({
             apiKey: ConfigModel.apiKey,
             modelName: ConfigModel.model,
             temperature: ConfigModel.temperature,

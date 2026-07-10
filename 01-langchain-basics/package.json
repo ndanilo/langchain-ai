@@ -19,10 +19,12 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "langchain:server": "npx @langchain/langgraph-cli dev",
-    "start": "npm run dev",
+    "start": "tsx src/index.ts",
     "debug": "tsx watch --inspect src/index.ts",
     "build": "tsc",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --import ./tests/register.ts --import tsx --test tests/**/*.test.ts",
+    "test:watch": "node --import ./tests/register.ts --import tsx --watch --test tests/**/*.test.ts"
   },
   "dependencies": {
     "@langchain/core": "^1.2.1",
