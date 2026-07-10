@@ -1,7 +1,7 @@
 {
-  "name": "langchain-ai",
+  "name": "01-langchain-basics",
   "version": "1.0.0",
-  "description": "Study workspace for LangChain, LangGraph, and LangSmith with Node.js and TypeScript",
+  "description": "Basic LangChain.js integration for Applied AI Engineering",
   "homepage": "https://github.com/ndanilo/langchain-ai#readme",
   "bugs": {
     "url": "https://github.com/ndanilo/langchain-ai/issues"

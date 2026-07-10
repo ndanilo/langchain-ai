@@ -1,6 +1,6 @@
 ---
 description: LangChain / LangGraph / LangSmith patterns for experiments
-globs: examples/**/*
+globs: 01-langchain-basics/**/*
 alwaysApply: false
 ---
 

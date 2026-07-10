@@ -1,36 +1,52 @@
+# Workspace .gitignore — applies to the repo root and every Node.js app folder
+# (e.g. 01-langchain-basics/, 02-*/). Patterns without a leading "/" match at any depth.
+
 # Dependencies
 node_modules/
 
 # Build output
 dist/
 build/
+out/
 *.tsbuildinfo
 
 # Environment & secrets
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
 
 # Logs
 logs/
 *.log
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Test & coverage
+coverage/
+.nyc_output/
+
+# Caches & temp
+.cache/
+.temp/
+.tmp/
+*.tmp
+.eslintcache
+.npm/
+
+# LangSmith / LangChain local caches
+.langchain/
+
+# LangGraph dev server
+.langgraph_api/
 
 # OS
 .DS_Store
 Thumbs.db
 
-# IDE
+# IDE (workspace-wide; .cursor/ is intentionally tracked)
 .idea/
 .vscode/*
 !.vscode/extensions.json
-
-# Test & coverage
-coverage/
-
-# LangSmith / local caches
-.langchain/
-.cache/
-
-# LangGraph API
-.langgraph_api

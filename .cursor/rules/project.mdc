@@ -3,20 +3,27 @@ description: Project context and study-workspace conventions
 alwaysApply: true
 ---
 
-# langchain-ai study workspace
+# langchain-ai workspace
 
-This repo is for learning the AI ecosystem (LangChain, LangGraph, LangSmith) with Node.js and TypeScript.
+This repo hosts multiple self-contained projects for the Applied AI Engineering course. Each project has its own `package.json`, dependencies, and `.env`.
 
-## Approach
+## Repository layout
 
-- Keep each experiment small and self-contained under `examples/<name>/`
+- **Root** — shared `.cursor/` rules and git; see root `README.md` for the project index
+- **`01-langchain-basics/`** — basic LangChain.js integration (Node.js + TypeScript)
+
+When working on a project, `cd` into its folder before `npm install` or run commands.
+
+## 01-langchain-basics conventions
+
+- Keep each experiment small and self-contained under `01-langchain-basics/examples/<name>/`
 - Build from scratch per topic — do not scaffold large apps unless asked
 - Prefer official LangChain.js / LangGraph.js patterns over custom abstractions
 - Use environment variables for API keys (never commit secrets)
 
-## When adding an experiment
+## When adding an experiment (01-langchain-basics)
 
-1. Create `examples/<descriptive-name>/index.ts`
+1. Create `01-langchain-basics/examples/<descriptive-name>/index.ts`
 2. Add only the dependencies that experiment needs
 3. Document how to run it in a local `README.md` inside that folder (one-liner is fine)
 
@@ -28,10 +35,16 @@ This repo is for learning the AI ecosystem (LangChain, LangGraph, LangSmith) wit
 
 ## Runtime & commands
 
-- **Node 24** — pinned in `.nvmrc` and `package.json` engines (`>=24`)
+- **Node 24** — pinned in `01-langchain-basics/.nvmrc` and `package.json` engines (`>=24`)
 - Before installing or running scripts, use Node 24: `nvm use 24` (nvm-windows may not read `.nvmrc` with bare `nvm use`)
 - **Shell**: Windows PowerShell — chain commands with `;`, not `&&` (unless PS 7+)
-- **Run experiments**: `npx tsx examples/<name>/index.ts` (no build step needed)
-- **Project scripts**: `npm run typecheck`, `npm run build`
-- **Env**: copy `.env.example` → `.env`; load with `import "dotenv/config"` in entry files
+- **Run experiments**: `npx tsx examples/<name>/index.ts` (from `01-langchain-basics/`)
+- **Project scripts**: `npm run typecheck`, `npm run build` (from `01-langchain-basics/`)
+- **Env**: copy `01-langchain-basics/.env.example` → `01-langchain-basics/.env`; load with `import "dotenv/config"` in entry files
 - Run install/test/run commands yourself — do not only tell the user to run them
+
+## Adding a new top-level project
+
+1. Create `<NN-project-name>/` at repo root with its own `package.json` and `README.md`
+2. Add the project to the table in the root `README.md`
+3. Do not hoist or share `node_modules` between projects

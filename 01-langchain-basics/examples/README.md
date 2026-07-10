@@ -9,5 +9,6 @@ Each subfolder is a self-contained study exercise. Name them with a numeric pref
 Run a script with:
 
 ```bash
+# from 01-langchain-basics/
 npx tsx examples/01-basic-prompt/index.ts
 ```

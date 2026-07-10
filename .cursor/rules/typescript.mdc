@@ -10,7 +10,7 @@ alwaysApply: false
 - Load env vars with `dotenv` at the entry point of each script
 - Prefer explicit types on public functions; let inference handle locals
 - Handle errors explicitly — log context, then rethrow or exit with a clear message
-- Run scripts with `npx tsx <file.ts>` — this project uses `tsx`, not `ts-node`
+- Run scripts with `npx tsx <file.ts>` from the project folder — projects use `tsx`, not `ts-node`
 
 ```typescript
 // Entry point pattern

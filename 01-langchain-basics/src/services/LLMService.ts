@@ -15,8 +15,8 @@ export class LLMService {
             configuration: {
                 baseURL: ConfigModel.apiHost,
                 defaultHeaders: {
-                    'HTTP-Referer': 'http://localhost/langchain-ai',
-                    'X-Title': 'langchain-ai',
+                    'HTTP-Referer': 'http://localhost/01-langchain-basics',
+                    'X-Title': '01-langchain-basics',
                 }
             },
         });
