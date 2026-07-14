@@ -1,8 +1,9 @@
 import { ConfigModel } from "../config/config.js";
 import { ChatOpenAI } from "@langchain/openai";
-import { createAgent } from "langchain";
-import { HumanMessage } from "@langchain/core/messages";
+import { createAgent, providerStrategy } from "langchain";
+import { HumanMessage, AIMessage } from "@langchain/core/messages";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
+import { z } from "zod/v3";
 
 export class LLMService {
     private llmClient: BaseChatModel;
@@ -23,14 +24,19 @@ export class LLMService {
         });
     }
 
-    async makeAIRequestAsync(userPrompt: string) 
+    async generateStructuredOutputAsync<T>(
+        systemPrompt: string,
+        userPrompt: string,
+        schema: z.ZodSchema<T>)
     {
         const agent = createAgent({
             model: this.llmClient,
             tools: [],
+            responseFormat: providerStrategy(schema),
         })
 
-        const messages = [new HumanMessage(userPrompt)];
+        const messages = [new AIMessage(systemPrompt),
+                          new HumanMessage(userPrompt)];
 
         const result = await agent.invoke({ messages });
         return result;
