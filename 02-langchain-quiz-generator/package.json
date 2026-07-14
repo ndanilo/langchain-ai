@@ -1,0 +1,43 @@
+{
+  "name": "01-langchain-basics",
+  "version": "1.0.0",
+  "description": "Basic LangChain.js integration for Applied AI Engineering",
+  "homepage": "https://github.com/ndanilo/langchain-ai#readme",
+  "bugs": {
+    "url": "https://github.com/ndanilo/langchain-ai/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ndanilo/langchain-ai.git"
+  },
+  "license": "ISC",
+  "author": "Danilo",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "langchain:server": "npx @langchain/langgraph-cli dev",
+    "start": "tsx src/index.ts",
+    "debug": "tsx watch --inspect src/index.ts",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import ./tests/register.ts --import tsx --test tests/**/*.test.ts",
+    "test:watch": "node --import ./tests/register.ts --import tsx --watch --test tests/**/*.test.ts"
+  },
+  "dependencies": {
+    "@langchain/core": "^1.2.1",
+    "@langchain/langgraph": "^1.4.7",
+    "@langchain/openai": "^1.5.4",
+    "dotenv": "^17.4.2",
+    "fastify": "^5.10.0",
+    "langchain": "^1.5.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "tsx": "^4.23.0",
+    "typescript": "^7.0.2",
+    "zod": "^4.4.3"
+  }
+}
