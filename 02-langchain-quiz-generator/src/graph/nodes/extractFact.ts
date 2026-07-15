@@ -1,12 +1,13 @@
-import { GraphAnnotation } from "../graph.js";
 import { AIMessage } from "@langchain/core/messages";
 import { generateSystemPrompt } from "../prompts/prompts.js";
 import { LLMService } from "../../services/LLMService.js";
-import { fact, type Fact } from "../graph.js";
-import { z } from "zod/v3";
+import {
+    factsSchema,
+    type Fact,
+    type GraphAnnotation,
+} from "../schemas.js";
 
 const llmService = new LLMService();
-const factsSchema = z.array(fact);
 
 export function extractFact() {
     return async (state: GraphAnnotation): Promise<GraphAnnotation> => {
@@ -15,21 +16,22 @@ export function extractFact() {
 
         const result = await llmService.generateStructuredOutputAsync<Fact[]>(
             systemPrompt,
-            userPrompt, 
-            factsSchema);
+            userPrompt,
+            factsSchema,
+        );
 
         if (!result.success) {
             return {
                 ...state,
-                messages: [new AIMessage("error: " + result.error)]
-            }
+                messages: [new AIMessage("error: " + result.error)],
+            };
         }
 
         const facts = JSON.stringify(result.data);
 
         return {
             ...state,
-            messages: [new AIMessage(facts)]
-        }
-    }
+            messages: [new AIMessage(facts)],
+        };
+    };
 }

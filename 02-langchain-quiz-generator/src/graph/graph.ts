@@ -1,28 +1,12 @@
-import { StateSchema, MessagesValue, MessagesZodMeta, StateGraph, START, END } from "@langchain/langgraph";
-import { AIMessage } from "@langchain/core/messages";
-import { z } from "zod/v3";
-import { withLangGraph } from "@langchain/langgraph/zod";
-import { BaseMessage } from "@langchain/core/messages";
-
+import { StateGraph, START, END } from "@langchain/langgraph";
 import { extractFact } from "./nodes/extractFact.js";
-
-export const fact = z.object({
-    fact: z.string(),
-    importance: z.enum(["low", "medium", "high"]),
-});
-
-export const graphAnnotation = z.object({
-    messages: withLangGraph(z.custom<BaseMessage[]>(),MessagesZodMeta)
-});
-
-export type GraphAnnotation = z.infer<typeof graphAnnotation>;
-export type Fact = z.infer<typeof fact>;
+import { graphAnnotation } from "./schemas.js";
 
 const workflow = new StateGraph({
-    stateSchema: graphAnnotation
+    stateSchema: graphAnnotation,
 })
-.addNode("extractFact", extractFact())
-.addEdge(START, "extractFact")
-.addEdge("extractFact", END);
+    .addNode("extractFact", extractFact())
+    .addEdge(START, "extractFact")
+    .addEdge("extractFact", END);
 
 export const graph = workflow.compile();
