@@ -16,7 +16,7 @@ export const ConfigModel = configSchema.parse({
     apiHost: "https://openrouter.ai/api/v1",
     provider: "openai",
     apiKey: env.OPENAI_API_KEY,
-    model: "nvidia/nemotron-3-super-120b-a12b:free",
+    model: "nvidia/nemotron-3-ultra-550b-a55b:free",
     temperature: 0.7,
     maxTokens: undefined,
 });

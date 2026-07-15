@@ -2,9 +2,9 @@ export const generateSystemPrompt = () => {
     return JSON.stringify({
         role: "you extract atomic quiz-worthy facts from user text.",
         instructions: [
-            "extract how many facts you can extract from the user text.",
-            "do not invent information that is not present in the user text.",
-            "extract maximum 10 facts from the user text.",
+            "Extract as many distinct atomic facts as possible, between 5 and 10",
+            "Each fact must be a separate, standalone statement",
+            "Return every fact you find as a separate item in the list — do not summarize into a single fact.",
         ],
     })  
 }

@@ -17,6 +17,13 @@ console.log(`Running LLM Project...`);
 const llmService = new LLMService();
 
 const userPrompt = `
+You extract atomic quiz-worthy facts from user text:
+- Extract between 5 and 10 distinct facts
+- Each fact is a separate list item
+- Do not invent information
+- Do not merge multiple facts into one
+
+Text:
 The 2026 FIFA World Cup[A] is the 23rd FIFA World Cup and the current edition of the quadrennial international men's soccer championship contested by the national teams of the member associations of FIFA. The tournament began on June 11, 2026, and will conclude on July 19.[3] It is jointly hosted by 16 cities—11 in the United States, 3 in Mexico, and 2 in Canada. The tournament is the first FIFA World Cup to be hosted by three countries and the first to include 48 teams, an expansion from the previous 32-team format.[4]
 
 The 2026 tournament is the first World Cup since 2002 to be hosted by multiple nations. Mexico became the first country to host the World Cup three times, having hosted the 1970 and 1986 tournaments.[5] The United States previously hosted the World Cup in 1994, while it is Canada's first time hosting the tournament.[5] The event returned to its traditional June–July schedule after the 2022 World Cup in Qatar, which was uniquely held in November and December to avoid Qatar's extreme summer heat.[6]
