@@ -1,16 +1,12 @@
 import { LLMService } from "./services/LLMService.js";
-import { z } from "zod/v3";
 import { generateSystemPrompt } from "./graph/prompts/prompts.js";
 
 import {
-    fact,
-    type Fact,
-    type GraphAnnotation,
+    factsSchema,
+    type Facts,
 } from "./graph/schemas.js";
 
 const systemPrompt = generateSystemPrompt();
-
-const factSchema = z.array(fact).min(1).max(10);
 
 console.log(`Running LLM Project...`);
 
@@ -71,10 +67,10 @@ Central Region (Guadalajara, Mexico City, Monterrey, Houston, Dallas, Kansas Cit
 Eastern Region (Atlanta, Miami, Toronto, Boston, Philadelphia, New York/New Jersey)
 `;
 
-const result = await llmService.generateStructuredOutputAsync<Fact[]>(
+const result = await llmService.generateStructuredOutputAsync<Facts>(
     systemPrompt,
     userPrompt,
-    factSchema,
+    factsSchema,
 );
 
 if (!result.success) {

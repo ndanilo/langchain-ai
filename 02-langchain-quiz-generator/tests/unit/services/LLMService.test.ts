@@ -4,6 +4,10 @@ import { fakeModel } from "langchain";
 import { AIMessage, HumanMessage } from "@langchain/core/messages";
 import { z } from "zod/v3";
 import { LLMService } from "../../../src/services/LLMService.js";
+import {
+  factsSchema,
+  type Facts,
+} from "../../../src/graph/schemas.js";
 
 const replySchema = z.object({
   reply: z.string(),
@@ -12,7 +16,7 @@ const replySchema = z.object({
 type Reply = z.infer<typeof replySchema>;
 
 /** Fake models must queue an AIMessage whose content matches the schema JSON. */
-function createStructuredModel(data: Reply) {
+function createStructuredModel(data: Reply | Facts) {
   return fakeModel().respond(new AIMessage(JSON.stringify(data)));
 }
 
@@ -64,5 +68,27 @@ describe("LLMService", () => {
     assert.equal(result.data, null);
     assert.equal(result.error, "rate limit");
     assert.equal(model.callCount, 1);
+  });
+
+  it("returns a list of facts from factsSchema", async () => {
+    const facts: Facts = [
+      { fact: "The tournament expanded to 48 teams.", importance: "high" },
+      { fact: "It is hosted by the US, Mexico, and Canada.", importance: "high" },
+      { fact: "The final is scheduled for July 19.", importance: "medium" },
+    ];
+    const model = createStructuredModel(facts);
+    const service = new LLMService(model);
+
+    const result = await service.generateStructuredOutputAsync<Facts>(
+      "Extract quiz facts.",
+      "World Cup article",
+      factsSchema,
+    );
+
+    assert.equal(result.success, true);
+    assert.equal(result.error, null);
+    assert.ok(Array.isArray(result.data));
+    assert.equal(result.data?.length, 3);
+    assert.deepEqual(result.data, facts);
   });
 });

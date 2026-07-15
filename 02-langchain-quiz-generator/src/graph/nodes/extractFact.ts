@@ -1,26 +1,24 @@
 import { AIMessage } from "@langchain/core/messages";
 import { generateSystemPrompt } from "../prompts/prompts.js";
 import { LLMService } from "../../services/LLMService.js";
-import { z } from "zod/v3";
 
 import {
-    fact,
-    type Fact,
+    factsSchema,
+    type Facts,
     type GraphAnnotation,
 } from "../schemas.js";
 
-const factSchema = z.array(fact).min(1).max(10);
-const llmService = new LLMService();
+const defaultLlmService = new LLMService();
 
-export function extractFact() {
+export function extractFact(llmService: LLMService = defaultLlmService) {
     return async (state: GraphAnnotation): Promise<GraphAnnotation> => {
         const systemPrompt = generateSystemPrompt();
         const userPrompt = state.messages.at(-1)!.text;
 
-        const result = await llmService.generateStructuredOutputAsync<Fact[]>(
+        const result = await llmService.generateStructuredOutputAsync<Facts>(
             systemPrompt,
             userPrompt,
-            factSchema,
+            factsSchema,
         );
 
         if (!result.success) {
