@@ -8,7 +8,10 @@ export const fact = z.object({
     importance: z.enum(["low", "medium", "high"]),
 });
 
-export const factsSchema = z.array(fact);
+export const factsSchema = z.object({
+    facts: z.array(fact).min(1).max(10)
+    .describe("All distinct atomic facts extracted from the text"),
+});
 
 export const graphAnnotation = z.object({
     messages: withLangGraph(z.custom<BaseMessage[]>(), MessagesZodMeta),
