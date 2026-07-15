@@ -1,7 +1,7 @@
 import { ConfigModel } from "../config/config.js";
 import { ChatOpenAI } from "@langchain/openai";
 import { createAgent, providerStrategy } from "langchain";
-import { HumanMessage, AIMessage } from "@langchain/core/messages";
+import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import { z } from "zod/v3";
 
@@ -27,18 +27,38 @@ export class LLMService {
     async generateStructuredOutputAsync<T>(
         systemPrompt: string,
         userPrompt: string,
-        schema: z.ZodSchema<T>)
-    {
-        const agent = createAgent({
-            model: this.llmClient,
-            tools: [],
-            responseFormat: providerStrategy(schema),
-        })
+        schema: z.ZodSchema<T>){
 
-        const messages = [new AIMessage(systemPrompt),
-                          new HumanMessage(userPrompt)];
-
-        const result = await agent.invoke({ messages });
-        return result;
+        try {
+            const agent = createAgent({
+                model: this.llmClient,
+                tools: [],
+                responseFormat: providerStrategy(schema),
+            })
+    
+            const messages = [new SystemMessage(systemPrompt),
+                              new HumanMessage(userPrompt)];
+    
+            const result = await agent.invoke({ messages });
+            return {
+                success: true,
+                data: result.structuredResponse,
+                error: null,
+            };
+        } 
+        catch (error) {
+            if (error instanceof Error) {
+                return {
+                    success: false,
+                    data: null,
+                    error: error.message,
+                };
+            }
+            return {
+                success: false,
+                data: null,
+                error: "An unknown error occurred",
+            };
+        }
     }
 }
