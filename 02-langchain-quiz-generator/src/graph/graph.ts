@@ -6,34 +6,17 @@ import { BaseMessage } from "@langchain/core/messages";
 
 import { extractFact } from "./nodes/extractFact.js";
 
-const fact = z.object({
+export const fact = z.object({
     fact: z.string(),
     importance: z.enum(["low", "medium", "high"]),
 });
 
-const graphAnnotation = z.object({
+export const graphAnnotation = z.object({
     messages: withLangGraph(z.custom<BaseMessage[]>(),MessagesZodMeta)
 });
 
 export type GraphAnnotation = z.infer<typeof graphAnnotation>;
 export type Fact = z.infer<typeof fact>;
-
-/*
-async function respondNode(state:any) {
-    const index = state.messages.length - 1;
-    const received = state.messages[index].content.toUpperCase();
-    return {
-        messages: [new AIMessage(received)]
-    }
-}
-
-export const graph = new StateGraph(state)
-    .addNode("respond", respondNode)
-    .addEdge(START, "respond")
-    .addEdge("respond", END)
-    .compile();
-
-*/
 
 const workflow = new StateGraph({
     stateSchema: graphAnnotation
