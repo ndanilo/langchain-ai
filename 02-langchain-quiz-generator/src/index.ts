@@ -3,14 +3,14 @@ import { z } from "zod/v3";
 import { generateSystemPrompt } from "./graph/prompts/prompts.js";
 
 import {
-    factsSchema,
+    fact,
     type Fact,
     type GraphAnnotation,
 } from "./graph/schemas.js";
 
 const systemPrompt = generateSystemPrompt();
 
-type FactsSchema = z.infer<typeof factsSchema>;
+const factSchema = z.array(fact).min(1).max(10);
 
 console.log(`Running LLM Project...`);
 
@@ -71,10 +71,10 @@ Central Region (Guadalajara, Mexico City, Monterrey, Houston, Dallas, Kansas Cit
 Eastern Region (Atlanta, Miami, Toronto, Boston, Philadelphia, New York/New Jersey)
 `;
 
-const result = await llmService.generateStructuredOutputAsync<FactsSchema>(
+const result = await llmService.generateStructuredOutputAsync<Fact[]>(
     systemPrompt,
     userPrompt,
-    factsSchema,
+    factSchema,
 );
 
 if (!result.success) {

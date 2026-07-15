@@ -4,12 +4,12 @@ import { LLMService } from "../../services/LLMService.js";
 import { z } from "zod/v3";
 
 import {
-    factsSchema,
+    fact,
     type Fact,
     type GraphAnnotation,
 } from "../schemas.js";
 
-type FactsSchema = z.infer<typeof factsSchema>;
+const factSchema = z.array(fact).min(1).max(10);
 const llmService = new LLMService();
 
 export function extractFact() {
@@ -17,10 +17,10 @@ export function extractFact() {
         const systemPrompt = generateSystemPrompt();
         const userPrompt = state.messages.at(-1)!.text;
 
-        const result = await llmService.generateStructuredOutputAsync<FactsSchema>(
+        const result = await llmService.generateStructuredOutputAsync<Fact[]>(
             systemPrompt,
             userPrompt,
-            factsSchema,
+            factSchema,
         );
 
         if (!result.success) {
