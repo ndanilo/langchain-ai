@@ -4,7 +4,7 @@ Reusable test template for course projects. Copy this `tests/` folder when start
 
 ## Run
 
-From `01-langchain-basics/`:
+From `02-langchain-quiz-generator/`:
 
 ```bash
 npm test              # run once

@@ -9,10 +9,11 @@ Shared tooling (`.cursor/`, git history) lives at the repository root. Work insi
 | Project | Description |
 | ------- | ----------- |
 | [01-langchain-basics](./01-langchain-basics/) | Basic LangChain.js integration: env validation, OpenRouter chat model, agent call, and hello-world LangGraph |
+| [02-langchain-quiz-generator](./02-langchain-quiz-generator/) | Quiz pipeline (in progress): structured fact extraction with Zod + LangGraph |
 
 ## Adding a new project
 
-1. Create a folder at the repo root with a numeric prefix, e.g. `02-langgraph-agent/`
+1. Create a folder at the repo root with a numeric prefix, e.g. `03-rag-basics/`
 2. Add its own `package.json`, README, and `.env.example`
 3. List it in the table above
 4. Keep experiments or modules inside that project — do not share `node_modules` across projects
@@ -21,15 +22,11 @@ Shared tooling (`.cursor/`, git history) lives at the repository root. Work insi
 
 ```
 .
-├── .cursor/              # shared Cursor rules (all projects)
+├── .cursor/                       # shared Cursor rules (all projects)
 ├── .git/
-├── README.md             # this file
-└── 01-langchain-basics/  # first course project
-    ├── examples/
-    ├── src/
-    ├── tests/
-    ├── package.json
-    └── ...
+├── README.md                      # this file
+├── 01-langchain-basics/           # first course project
+└── 02-langchain-quiz-generator/   # structured output + quiz pipeline
 ```
 
 ## Prerequisites
