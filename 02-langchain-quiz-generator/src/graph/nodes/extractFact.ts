@@ -1,5 +1,4 @@
-import { AIMessage } from "@langchain/core/messages";
-import { generateSystemPrompt } from "../prompts/prompts.js";
+import { generateFactsSystemPrompt } from "../prompts/prompts.js";
 import { LLMService } from "../../services/LLMService.js";
 
 import {
@@ -11,8 +10,8 @@ import {
 const defaultLlmService = new LLMService();
 
 export function extractFact(llmService: LLMService = defaultLlmService) {
-    return async (state: GraphAnnotation): Promise<GraphAnnotation> => {
-        const systemPrompt = generateSystemPrompt();
+    return async (state: GraphAnnotation): Promise<Partial<GraphAnnotation>> => {
+        const systemPrompt = generateFactsSystemPrompt();
         const userPrompt = state.messages.at(-1)!.text;
 
         const result = await llmService.generateStructuredOutputAsync<Facts>(
@@ -24,15 +23,16 @@ export function extractFact(llmService: LLMService = defaultLlmService) {
         if (!result.success) {
             return {
                 ...state,
-                messages: [new AIMessage("error: " + result.error)],
+                success: false,
+                errorMessage: `${result.error ?? "Unknown error"}`,
             };
         }
 
-        const facts = JSON.stringify(result.data);
-
         return {
             ...state,
-            messages: [new AIMessage(facts)],
+            facts: result.data,
+            sourceText: userPrompt,
+            success: true,
         };
     };
 }

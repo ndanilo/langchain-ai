@@ -27,7 +27,9 @@ export class LLMService {
     async generateStructuredOutputAsync<T>(
         systemPrompt: string,
         userPrompt: string,
-        schema: z.ZodSchema<T>){
+        schema: z.ZodSchema<T>): Promise<
+         | { success: true, data: T , error: null }
+         | { success: false, data: null, error: string }> {
 
         try {
             const agent = createAgent({
@@ -42,7 +44,7 @@ export class LLMService {
             const result = await agent.invoke({ messages });
             return {
                 success: true,
-                data: result.structuredResponse,
+                data: result.structuredResponse as T,
                 error: null,
             };
         } 
