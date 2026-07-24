@@ -14,7 +14,8 @@ export function generateQuestions(llmService: LLMService = defaultLlmService) {
     return async (state: GraphAnnotation): Promise<Partial<GraphAnnotation>> => {
 
         if (!state.success || !state.facts.length) {
-            const errorMessage = state.errorMessage ?? "No facts to generate questions from";
+            const errorMessage =
+                state.errorMessage || "No facts to generate questions from";
             return {
                 ...state,
                 success: false,
@@ -35,15 +36,17 @@ export function generateQuestions(llmService: LLMService = defaultLlmService) {
         if (!result.success) {
             return {
                 ...state,
-                messages: [new AIMessage("error: " + result.error)],
+                success: false,
+                errorMessage: `${result.error ?? "Unknown error"}`,
+                messages: [new AIMessage(`error: ${result.error ?? "Unknown error"}`)],
             };
         }
 
-        const questions = JSON.stringify(result.data);
-
         return {
             ...state,
-            messages: [new AIMessage(questions)],
+            questions: result.data,
+            success: true,
+            messages: [new AIMessage(JSON.stringify(result.data))],
         };
     };
 }

@@ -6,7 +6,9 @@ import { z } from "zod/v3";
 import { LLMService } from "../../../src/services/LLMService.js";
 import {
   factsSchema,
+  questionsSchema,
   type Facts,
+  type Questions,
 } from "../../../src/graph/schemas.js";
 
 const replySchema = z.object({
@@ -16,7 +18,7 @@ const replySchema = z.object({
 type Reply = z.infer<typeof replySchema>;
 
 /** Fake models must queue an AIMessage whose content matches the schema JSON. */
-function createStructuredModel(data: Reply | Facts) {
+function createStructuredModel(data: Reply | Facts | Questions) {
   return fakeModel().respond(new AIMessage(JSON.stringify(data)));
 }
 
@@ -90,5 +92,32 @@ describe("LLMService", () => {
     assert.ok(Array.isArray(result.data));
     assert.equal(result.data?.length, 3);
     assert.deepEqual(result.data, facts);
+  });
+
+  it("returns a list of questions from questionsSchema", async () => {
+    const questions: Questions = [
+      {
+        question: "How many teams compete?",
+        options: ["32", "40", "48", "64"],
+      },
+      {
+        question: "How many host nations?",
+        options: ["1", "2", "3", "4"],
+      },
+    ];
+    const model = createStructuredModel(questions);
+    const service = new LLMService(model);
+
+    const result = await service.generateStructuredOutputAsync<Questions>(
+      "Generate quiz questions.",
+      "World Cup facts",
+      questionsSchema,
+    );
+
+    assert.equal(result.success, true);
+    assert.equal(result.error, null);
+    assert.ok(Array.isArray(result.data));
+    assert.equal(result.data?.length, 2);
+    assert.deepEqual(result.data, questions);
   });
 });

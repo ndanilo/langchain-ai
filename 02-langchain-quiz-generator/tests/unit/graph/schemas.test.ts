@@ -1,6 +1,11 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { fact, factsSchema } from "../../../src/graph/schemas.js";
+import {
+  fact,
+  factsSchema,
+  question,
+  questionsSchema,
+} from "../../../src/graph/schemas.js";
 
 describe("fact schema", () => {
   it("accepts a valid fact", () => {
@@ -55,6 +60,80 @@ describe("factsSchema", () => {
     assert.throws(() =>
       factsSchema.parse({
         facts: [{ fact: "Only one", importance: "high" }],
+      }),
+    );
+  });
+});
+
+describe("question schema", () => {
+  it("accepts a valid question with up to 4 options", () => {
+    const parsed = question.parse({
+      question: "How many teams compete?",
+      options: ["32", "40", "48", "64"],
+    });
+
+    assert.equal(parsed.options.length, 4);
+    assert.match(parsed.question, /teams/);
+  });
+
+  it("rejects empty question text", () => {
+    assert.throws(() =>
+      question.parse({ question: "", options: ["a"] }),
+    );
+  });
+
+  it("rejects more than 4 options", () => {
+    assert.throws(() =>
+      question.parse({
+        question: "Pick one",
+        options: ["a", "b", "c", "d", "e"],
+      }),
+    );
+  });
+
+  it("rejects an empty options list", () => {
+    assert.throws(() =>
+      question.parse({ question: "Pick one", options: [] }),
+    );
+  });
+});
+
+describe("questionsSchema", () => {
+  it("accepts a list of 1–10 questions", () => {
+    const parsed = questionsSchema.parse([
+      {
+        question: "How many host nations?",
+        options: ["1", "2", "3", "4"],
+      },
+      {
+        question: "How many teams?",
+        options: ["32", "48"],
+      },
+    ]);
+
+    assert.equal(parsed.length, 2);
+    assert.equal(parsed[0]?.options.length, 4);
+  });
+
+  it("rejects an empty list", () => {
+    assert.throws(() => questionsSchema.parse([]));
+  });
+
+  it("rejects more than 10 questions", () => {
+    const tooMany = Array.from({ length: 11 }, (_, i) => ({
+      question: `Question ${i + 1}?`,
+      options: ["a", "b", "c", "d"],
+    }));
+
+    assert.throws(() => questionsSchema.parse(tooMany));
+  });
+
+  it("rejects a wrapped object shape", () => {
+    assert.throws(() =>
+      questionsSchema.parse({
+        questions: [
+          { question: "Only one?", options: ["yes", "no"] },
+        ],
       }),
     );
   });
