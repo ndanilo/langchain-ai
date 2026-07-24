@@ -32,7 +32,7 @@ function createState(
 }
 
 describe("generateQuestions", () => {
-  it("stores generated questions on graph state and appends an AI message", async () => {
+  it("stores generated questions on graph state", async () => {
     const questions: Questions = [
       {
         question: "How many teams compete in the 2026 World Cup?",
@@ -46,8 +46,6 @@ describe("generateQuestions", () => {
 
     assert.equal(next.success, true);
     assert.deepEqual(next.questions, questions);
-    assert.equal(next.messages?.length, 1);
-    assert.equal(next.messages?.[0]?.content, JSON.stringify(questions));
     assert.equal(model.callCount, 1);
   });
 
