@@ -45,8 +45,7 @@ export function generateQuestions(llmService: LLMService = defaultLlmService) {
         return {
             ...state,
             questions: result.data,
-            success: true,
-            messages: [new AIMessage(JSON.stringify(result.data))],
+            success: true
         };
     };
 }
