@@ -29,17 +29,30 @@ function printToolTrace(messages: BaseMessage[]) {
     }
 }
 
-async function ask(question: string) {
-    const result = await llmService.makeAIRequestAsync(question);
+/*
+Two passes over the model. The agent researches with tools at temperature 0, then a
+second call rewrites its notes for a human at a warmer temperature. Pass --raw to also
+see the researcher's draft, which is the interesting comparison while learning.
+*/
+async function ask(question: string, showDraft: boolean) {
+    const research = await llmService.makeAIRequestAsync(question);
+    printToolTrace(research.messages);
 
-    printToolTrace(result.messages);
-    console.log(`\n${result.messages.at(-1)?.content}\n`);
+    if (showDraft) {
+        console.log(`\n--- research draft ---\n${research.messages.at(-1)?.content}`);
+        console.log("\n--- friendly answer ---");
+    }
+
+    const answer = await llmService.writeFriendlyAnswerAsync(question, research.messages);
+    console.log(`\n${answer}\n`);
 }
 
-const cliQuestion = process.argv.slice(2).join(" ").trim();
+const args = process.argv.slice(2);
+const showDraft = args.includes("--raw");
+const cliQuestion = args.filter((arg) => arg !== "--raw").join(" ").trim();
 
 if (cliQuestion) {
-    await ask(cliQuestion);
+    await ask(cliQuestion, showDraft);
 } else {
     const rl = createInterface({ input: process.stdin, output: process.stdout });
     console.log("Ask anything. Empty line to quit.\n");
@@ -49,7 +62,7 @@ if (cliQuestion) {
         if (!question) break;
 
         try {
-            await ask(question);
+            await ask(question, showDraft);
         } catch (error) {
             console.error(`Request failed: ${(error as Error).message}\n`);
         }
