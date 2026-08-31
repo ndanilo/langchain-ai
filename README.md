@@ -10,6 +10,7 @@ Shared tooling (`.cursor/`, git history) lives at the repository root. Work insi
 | ------- | ----------- |
 | [01-langchain-basics](./01-langchain-basics/) | Basic LangChain.js integration: env validation, OpenRouter chat model, agent call, and hello-world LangGraph |
 | [02-langchain-quiz-generator](./02-langchain-quiz-generator/) | Quiz pipeline (in progress): structured fact extraction with Zod + LangGraph |
+| [03-langchain-tool-calling](./03-langchain-tool-calling/) | Tool calling (in progress): scaffolded from `01-langchain-basics` |
 
 ## Adding a new project
 
@@ -26,7 +27,8 @@ Shared tooling (`.cursor/`, git history) lives at the repository root. Work insi
 ├── .git/
 ├── README.md                      # this file
 ├── 01-langchain-basics/           # first course project
-└── 02-langchain-quiz-generator/   # structured output + quiz pipeline
+├── 02-langchain-quiz-generator/   # structured output + quiz pipeline
+└── 03-langchain-tool-calling/     # tool calling
 ```
 
 ## Prerequisites
