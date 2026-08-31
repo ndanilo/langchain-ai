@@ -15,3 +15,19 @@ export function createEchoModel(): FakeBuiltModel {
     return new AIMessage(`Echo: ${text}`);
   });
 }
+
+/**
+ * Returns a fake model that drives one full turn of the agent loop: the first
+ * invocation asks for `toolCalls`, the second answers with `finalContent`.
+ *
+ * Responses are consumed FIFO, one per invocation, which mirrors what a real model
+ * does across the model -> tools -> model round trip.
+ */
+export function createToolCallingModel(
+  toolCalls: Array<{ name: string; args: Record<string, unknown> }>,
+  finalContent: string,
+): FakeBuiltModel {
+  return fakeModel()
+    .respondWithTools(toolCalls)
+    .respond(new AIMessage(finalContent));
+}

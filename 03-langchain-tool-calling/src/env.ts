@@ -22,6 +22,7 @@ const envSchema = z.object({
     OPENAI_ROUTER_API_KEY: optionalString,
     OPENAI_API_KEY: optionalString,
     ANTHROPIC_API_KEY: optionalString,
+    TAVILY_API_KEY: optionalString,
     LANGCHAIN_TRACING_V2: optionalBoolean.default(false),
     LANGCHAIN_API_KEY: optionalString,
     LANGCHAIN_PROJECT: z.string().min(1).default("03-langchain-tool-calling"),
