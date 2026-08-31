@@ -50,6 +50,28 @@ Capping the evidence per tool call is what keeps the second prompt small.
 Note that temperature is a diversity knob, not a quality knob. It does not make output more
 thorough or better written — that comes from the prompt.
 
+## Keeping the agent from spiralling
+
+Left alone, an agent chasing a figure it cannot pin down will rephrase the same search
+forever. Observed here: a question about the dollar rate in Portuguese produced 13+ tool
+calls in 88 seconds, hit the recursion limit, and returned nothing. Three defences, in
+order of how early they fire:
+
+1. **The prompt** tells it never to repeat a search with different wording or a narrower
+   date, and that an approximate answer with a caveat beats silence. This does most of the
+   work — the same question now finishes in two tool calls.
+2. **`toolCallLimitMiddleware`** caps tool calls per question (`maxToolCallsPerRun`).
+   `exitBehavior: "continue"` blocks further calls and hands control back to the model so
+   it still writes an answer. `"end"` cannot be used here because it throws when a step
+   contains several parallel tool calls, which this agent routinely produces.
+3. **`recursionLimit`** is the last backstop. If it trips, the run is not lost:
+   `makeAIRequestAsync` streams, so it catches `GraphRecursionError` and returns the
+   messages gathered so far with `truncated: true`, and the presenter is told to hedge.
+
+Because the budget can end a run on a framework `ToolMessage` rather than an answer,
+`digestResearch()` takes its findings from the last AI message with text, not the last
+message.
+
 ## Tools
 
 Defined in `src/tools/`. Names are `snake_case` and descriptions are written to steer the
@@ -98,23 +120,45 @@ cp .env.example .env          # then fill in OPENAI_API_KEY and TAVILY_API_KEY
 ## Usage
 
 ```bash
-npm start                                          # interactive prompt
-npx tsx src/index.ts "who won the last F1 race?"   # one-shot
-npx tsx src/index.ts --raw "usd to brl rate?"      # also show the research draft
+npm start                                            # interactive prompt
+npx tsx src/index.ts "who won the last F1 race?"     # one-shot
+npx tsx src/index.ts --trace "usd to brl rate?"      # show which tools ran
+npx tsx src/index.ts --raw   "usd to brl rate?"      # show the research draft too
+npx tsx src/index.ts --quiet "usd to brl rate?"      # no progress indicator
+npx tsx src/index.ts --help
 ```
 
-`--raw` prints stage 1's draft alongside stage 2's answer, which is the interesting
-comparison while learning: same facts, different readability.
+A run takes 20–45s, so on a terminal you get a one-line spinner on stderr showing the
+current step and elapsed time. It is disabled automatically when stderr is not a TTY, so
+pipes and redirects stay clean; `--quiet` disables it on a terminal too.
 
-Each run prints the trace before the answer: `->` is the model requesting a tool, `<-` is
-what your code returned.
+`--trace` adds one line per step of the agent loop, where `->` is the model requesting a
+tool and `<-` is what your code handed back:
 
 ```
   -> get_current_datetime {}
   -> web_search {"query":"USD to BRL exchange rate today","topic":"finance"}
-  <- get_current_datetime {"iso":"2026-08-31T05:18:11.370Z",...}
-  <- web_search {"results":[{"url":"https://www.xe.com/...
+  <- get_current_datetime {"iso":"2026-08-31T13:08:30.596Z","timeZone":"UTC",...}
+  <- web_search 5 results, 6.4k chars, xe.com, revolut.com, tradingeconomics.com +2 more
 ```
+
+`--raw` additionally prints stage 1's draft, which is the interesting comparison while
+learning: same facts, different readability.
+
+### Output goes to two streams
+
+The answer goes to **stdout**; the trace, the draft and errors go to **stderr**. So you can
+watch the loop and still capture a clean result:
+
+```bash
+npx tsx src/index.ts --trace "usd to brl rate?" > answer.txt   # file holds only the answer
+npx tsx src/index.ts --trace "usd to brl rate?" 2> $null       # answer only, no trace
+```
+
+Nothing else writes to the console. Tavily does not log during normal operation, and
+dotenv's startup banner is suppressed with `config({ quiet: true })` in `src/env.ts`.
+The one exception is `@langchain/tavily`, which has a stray `console.log(response)` that
+fires only when a Tavily request fails (bad key, rate limit) before it throws.
 
 ## Scripts
 
@@ -140,7 +184,8 @@ the same detail as a hosted trace.
 ├── src/
 │   ├── config/        # validated model + Tavily settings
 │   ├── graph/         # LangGraph entry points for the dev server
-│   ├── services/      # LLMService: model + tools + prompt -> agent
+│   ├── lib/           # trace formatting for the CLI
+│   ├── services/      # LLMService: research stage + presenter stage
 │   ├── tools/         # the toolset
 │   ├── env.ts         # the only place that reads process.env
 │   └── index.ts       # CLI entry point

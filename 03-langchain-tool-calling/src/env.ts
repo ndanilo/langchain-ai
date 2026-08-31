@@ -1,7 +1,8 @@
 import { config } from "dotenv";
 import { z, prettifyError } from "zod";
 
-config();
+// quiet: dotenv v17 otherwise prints a banner and a rotating promo tip on every run.
+config({ quiet: true });
 
 /*
 Zod env variables schema set up

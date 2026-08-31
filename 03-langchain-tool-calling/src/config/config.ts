@@ -13,8 +13,14 @@ const configSchema = z.object({
      *  start embellishing facts the research stage already pinned down. */
     presenterTemperature: z.number().min(0).max(1),
     maxTokens: z.number().int().positive().optional(),
-    /** Caps the model -> tools -> model loop so a confused agent cannot spin forever. */
+    /** Backstop on the model -> tools -> model loop. Should stay above what
+     *  maxToolCallsPerRun allows, so the tool budget is what stops the agent and it
+     *  gets a chance to answer, instead of dying on a GraphRecursionError. */
     recursionLimit: z.number().int().positive(),
+    /** Tool calls allowed per question. Without this an agent chasing a number it
+     *  cannot pin down will keep rephrasing the same search until it runs out of
+     *  loop budget, which takes minutes and returns nothing. */
+    maxToolCallsPerRun: z.number().int().positive(),
     /** Per-request ceiling. ChatOpenAI defaults to no timeout, so a provider that
      *  stalls hangs the process forever. OpenRouter latency here is genuinely spiky
      *  (measured 1s to 25s for the same trivial prompt), so this is not optional. */
@@ -33,7 +39,8 @@ export const ConfigModel = configSchema.parse({
     researchTemperature: 0,
     presenterTemperature: 0.4,
     maxTokens: undefined,
-    recursionLimit: 15,
+    recursionLimit: 30,
+    maxToolCallsPerRun: 8,
     requestTimeoutMs: 60_000,
     maxRetries: 2,
 });

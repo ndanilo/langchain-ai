@@ -1,7 +1,8 @@
 import { ConfigModel } from "../config/config.js";
 import { ChatOpenAI } from "@langchain/openai";
-import { createAgent } from "langchain";
-import { HumanMessage, SystemMessage, ToolMessage, type BaseMessage } from "@langchain/core/messages";
+import { createAgent, toolCallLimitMiddleware } from "langchain";
+import { GraphRecursionError } from "@langchain/langgraph";
+import { AIMessage, HumanMessage, SystemMessage, ToolMessage, type BaseMessage } from "@langchain/core/messages";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import type { ClientTool, ServerTool } from "@langchain/core/tools";
 import { createResearchTools } from "../tools/index.js";
@@ -27,8 +28,14 @@ current facts, prices, news or recent events:
 4. Answer only from what the tools returned. If they disagree or come back empty, say so
    instead of filling the gap from memory.
 
-Be complete and precise rather than readable: another model turns your notes into prose.
-Always finish with the URLs you relied on, and note how fresh the information is.`;
+Budget: at most two searches and two extracts. Never repeat a search you have already run
+with different wording, a different language, or a narrower date — if the first results did
+not contain the exact figure, they will not on the fourth attempt either. Approximate
+answers with an honest caveat ("around 5.18, and sources vary by a few cents") are correct
+and useful; silence is not. Stop and answer as soon as you can say something true.
+
+Be precise rather than readable: another model turns your notes into prose. Always finish
+with the URLs you relied on, and note how fresh the information is.`;
 
 const PRESENTER_PROMPT = `You turn research notes into a short, friendly answer for someone
 who just asked a question in a chat.
@@ -77,8 +84,23 @@ export function createResearchAgent(
         model,
         tools,
         systemPrompt: RESEARCH_PROMPT,
+        middleware: [
+            // "continue" rejects further tool calls but hands control back to the model
+            // so it still writes an answer. "end" cannot be used here because it throws
+            // when a step contains several parallel tool calls, which ours routinely do.
+            toolCallLimitMiddleware({
+                runLimit: ConfigModel.maxToolCallsPerRun,
+                exitBehavior: "continue",
+            }),
+        ],
     });
 }
+
+export type ResearchResult = {
+    messages: BaseMessage[];
+    /** True when the loop was cut short instead of the model deciding it was done. */
+    truncated: boolean;
+};
 
 export type ResearchDigest = {
     /** The research agent's own answer: already synthesised, just not friendly. */
@@ -96,6 +118,33 @@ const URL_PATTERN = /https?:\/\/[^\s"'<>)\]}]+/g;
 
 function asText(content: unknown): string {
     return typeof content === "string" ? content : JSON.stringify(content);
+}
+
+/**
+ * The agent's answer, which is the last AI message carrying text.
+ *
+ * Not simply the last message: when the tool budget blocks a call, the run ends on a
+ * ToolMessage reading "Tool call limit exceeded", and treating that as the findings would
+ * feed the presenter a framework message instead of research.
+ */
+function lastAnswer(messages: BaseMessage[]): string {
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+        const message = messages[index]!;
+        if (!AIMessage.isInstance(message)) continue;
+
+        const text = asText(message.content).trim();
+        if (text.length > 0) return text;
+    }
+
+    return "";
+}
+
+/** True when the agent stopped before writing a final answer. */
+function endedWithoutAnswer(messages: BaseMessage[]): boolean {
+    const last = messages.at(-1);
+    if (!last || !AIMessage.isInstance(last)) return true;
+
+    return asText(last.content).trim().length === 0;
 }
 
 /** Collapses a finished agent run into just what the presenter needs to see. */
@@ -116,13 +165,13 @@ export function digestResearch(messages: BaseMessage[]): ResearchDigest {
     }
 
     return {
-        findings: asText(messages.at(-1)?.content ?? ""),
+        findings: lastAnswer(messages),
         evidence,
         sources: [...sources].slice(0, MAX_SOURCES),
     };
 }
 
-function renderDigest(question: string, digest: ResearchDigest): string {
+function renderDigest(question: string, digest: ResearchDigest, truncated: boolean): string {
     const sections = [
         `The user asked:\n${question}`,
         `\nWhat the research found:\n${digest.findings}`,
@@ -134,6 +183,14 @@ function renderDigest(question: string, digest: ResearchDigest): string {
 
     if (digest.sources.length > 0) {
         sections.push(`\nSource URLs:\n${digest.sources.join("\n")}`);
+    }
+
+    if (truncated) {
+        sections.push(
+            "\nThe research was cut short before it finished, so these notes may be" +
+                " incomplete. Answer with what is here, and tell the reader plainly that" +
+                " the figure could not be fully confirmed.",
+        );
     }
 
     return sections.join("\n");
@@ -162,28 +219,55 @@ export class LLMService {
         this.agent = createResearchAgent(this.researchModel, options.tools ?? createResearchTools());
     }
 
-    /** Stage 1: run the tool-calling loop and return the full agent state. */
-    async makeAIRequestAsync(userPrompt: string) 
-    {
-        const messages = [new HumanMessage(userPrompt)];
-
-        const result = await this.agent.invoke(
-            { messages },
-            { recursionLimit: ConfigModel.recursionLimit },
+    /**
+     * Stage 1: run the tool-calling loop and return the final agent state.
+     *
+     * Streamed rather than invoked so callers can report progress while it runs. A
+     * research pass takes tens of seconds, and without per-step feedback the process
+     * looks dead. `onMessage` fires once per new message, in order.
+     */
+    async makeAIRequestAsync(
+        userPrompt: string,
+        onMessage: (message: BaseMessage) => void = () => {},
+    ): Promise<ResearchResult> {
+        const stream = await this.agent.stream(
+            { messages: [new HumanMessage(userPrompt)] },
+            { streamMode: "values", recursionLimit: ConfigModel.recursionLimit },
         );
-        return result;
+
+        let messages: BaseMessage[] = [];
+        let reported = 0;
+
+        try {
+            for await (const state of stream) {
+                messages = state.messages;
+
+                for (const message of messages.slice(reported)) {
+                    onMessage(message);
+                }
+                reported = messages.length;
+            }
+        } catch (error) {
+            // Hitting the loop backstop is not a reason to throw away the research we
+            // already have. Streaming means `messages` still holds every tool result.
+            if (!(error instanceof GraphRecursionError)) throw error;
+            return { messages, truncated: true };
+        }
+
+        // The tool budget can also end a run mid-loop, without an exception.
+        return { messages, truncated: endedWithoutAnswer(messages) };
     }
 
     /** Stage 2: rewrite a finished run into something worth showing a person. */
     async writeFriendlyAnswerAsync(
         question: string,
-        researchMessages: BaseMessage[],
+        research: ResearchResult,
     ): Promise<string> {
-        const digest = digestResearch(researchMessages);
+        const digest = digestResearch(research.messages);
 
         const response = await this.presenterModel.invoke([
             new SystemMessage(PRESENTER_PROMPT),
-            new HumanMessage(renderDigest(question, digest)),
+            new HumanMessage(renderDigest(question, digest, research.truncated)),
         ]);
 
         return asText(response.content);

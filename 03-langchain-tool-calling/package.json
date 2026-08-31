@@ -17,7 +17,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx watch src/index.ts --trace --raw",
     "langchain:server": "npx @langchain/langgraph-cli dev",
     "start": "tsx src/index.ts",
     "debug": "tsx watch --inspect src/index.ts",

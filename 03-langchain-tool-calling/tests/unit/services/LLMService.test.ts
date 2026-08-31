@@ -4,6 +4,7 @@ import { fakeModel, tool } from "langchain";
 import { AIMessage, HumanMessage, ToolMessage } from "@langchain/core/messages";
 import { z } from "zod";
 import { LLMService, digestResearch } from "../../../src/services/LLMService.js";
+import { ConfigModel } from "../../../src/config/config.js";
 import { createReplyModel, createToolCallingModel } from "../../helpers/fake-llm.js";
 
 describe("LLMService research stage", () => {
@@ -76,6 +77,57 @@ describe("LLMService research stage", () => {
     assert.equal(result.messages.at(-1)?.content, "One dollar is five reais.");
   });
 
+  it("reports every message to onMessage, in loop order", async () => {
+    const stubSearch = tool(() => "5.00", {
+      name: "web_search",
+      description: "Stub search used in tests.",
+      schema: z.object({ query: z.string() }),
+    });
+
+    const model = createToolCallingModel(
+      [{ name: "web_search", args: { query: "usd brl" } }],
+      "One dollar is five reais.",
+    );
+    const service = new LLMService({ model, tools: [stubSearch] });
+
+    const seen: string[] = [];
+    await service.makeAIRequestAsync("How many BRL per USD?", (message) => {
+      seen.push(message.getType());
+    });
+
+    // The caller sees the loop unfold rather than one lump at the end, which is what
+    // lets the CLI show progress instead of sitting silent for a minute.
+    assert.deepEqual(seen, ["human", "ai", "tool", "ai"]);
+  });
+
+  it("caps a spiralling agent at the tool budget without throwing", async () => {
+    const stubSearch = tool(() => "no exact figure", {
+      name: "web_search",
+      description: "Stub search used in tests.",
+      schema: z.object({ query: z.string() }),
+    });
+
+    // A model that never stops asking for tools, which is what a real spiral looks like.
+    const model = fakeModel();
+    for (let i = 0; i < 60; i += 1) {
+      model.respondWithTools([{ name: "web_search", args: { query: `attempt ${i}` } }]);
+    }
+
+    const service = new LLMService({ model, tools: [stubSearch] });
+    const result = await service.makeAIRequestAsync("something unanswerable");
+
+    const executed = result.messages.filter(
+      (m) => ToolMessage.isInstance(m) && m.content === "no exact figure",
+    );
+    assert.equal(executed.length, ConfigModel.maxToolCallsPerRun);
+
+    // It ended on the budget block rather than an answer, so stage 2 must be warned.
+    assert.equal(result.truncated, true);
+
+    // The research gathered before the cutoff survives, so stage 2 can still answer.
+    assert.ok(result.messages.some((m) => ToolMessage.isInstance(m)));
+  });
+
   it("does not call any tool when the model answers directly", async () => {
     const stubSearch = tool(() => "should not run", {
       name: "web_search",
@@ -127,6 +179,33 @@ describe("digestResearch", () => {
     assert.deepEqual(digest.sources, ["https://example.com/rates"]);
   });
 
+  it("skips a trailing framework ToolMessage when picking the findings", () => {
+    // What the run looks like when the tool budget cuts it off: the last message is a
+    // block notice, not the agent's answer.
+    const digest = digestResearch([
+      new HumanMessage("How many BRL per USD?"),
+      new AIMessage("Around 5.19, sources vary by a few cents."),
+      new ToolMessage({
+        content: "Tool call limit exceeded. Do not make additional tool calls.",
+        name: "web_search",
+        tool_call_id: "call_9",
+      }),
+    ]);
+
+    assert.match(digest.findings, /Around 5\.19/);
+    assert.doesNotMatch(digest.findings, /limit exceeded/);
+  });
+
+  it("returns empty findings when the agent never answered", () => {
+    const digest = digestResearch([
+      new HumanMessage("Q"),
+      new ToolMessage({ content: "some evidence", name: "web_search", tool_call_id: "c1" }),
+    ]);
+
+    assert.equal(digest.findings, "");
+    assert.equal(digest.evidence.length, 1);
+  });
+
   it("returns empty collections for a run that used no tools", () => {
     const digest = digestResearch([
       new HumanMessage("Hi"),
@@ -144,14 +223,17 @@ describe("LLMService presenter stage", () => {
     const presenter = createReplyModel("A dollar buys about five reais right now.");
     const service = new LLMService({ model: createReplyModel("unused"), presenter });
 
-    const answer = await service.writeFriendlyAnswerAsync("How many BRL per USD?", [
-      new ToolMessage({
-        content: '{"results":[{"url":"https://example.com/rates"}]}',
-        name: "web_search",
-        tool_call_id: "call_1",
-      }),
-      new AIMessage("1 USD = 5.00 BRL."),
-    ]);
+    const answer = await service.writeFriendlyAnswerAsync("How many BRL per USD?", {
+      messages: [
+        new ToolMessage({
+          content: '{"results":[{"url":"https://example.com/rates"}]}',
+          name: "web_search",
+          tool_call_id: "call_1",
+        }),
+        new AIMessage("1 USD = 5.00 BRL."),
+      ],
+      truncated: false,
+    });
 
     assert.equal(answer, "A dollar buys about five reais right now.");
     assert.equal(presenter.callCount, 1);
@@ -168,7 +250,7 @@ describe("LLMService presenter stage", () => {
     const service = new LLMService({ model, presenter });
 
     const research = await service.makeAIRequestAsync("Hello");
-    await service.writeFriendlyAnswerAsync("Hello", research.messages);
+    await service.writeFriendlyAnswerAsync("Hello", research);
 
     // Each stage hit its own model exactly once: no cross-talk between them.
     assert.equal(model.callCount, 1);
@@ -179,10 +261,39 @@ describe("LLMService presenter stage", () => {
     const presenter = createReplyModel("ok");
     const service = new LLMService({ model: createReplyModel("unused"), presenter });
 
-    await service.writeFriendlyAnswerAsync("Q", [new AIMessage("finding")]);
+    await service.writeFriendlyAnswerAsync("Q", {
+      messages: [new AIMessage("finding")],
+      truncated: false,
+    });
 
     const system = presenter.calls[0]!.messages[0]!;
     assert.equal(system.getType(), "system");
     assert.match(system.content as string, /Use ONLY the facts/);
+  });
+
+  it("warns the presenter when the research was cut short", async () => {
+    const presenter = createReplyModel("ok");
+    const service = new LLMService({ model: createReplyModel("unused"), presenter });
+
+    await service.writeFriendlyAnswerAsync("Q", {
+      messages: [new AIMessage("partial finding")],
+      truncated: true,
+    });
+
+    const prompt = presenter.calls[0]!.messages.at(-1)!.content as string;
+    assert.match(prompt, /cut short/);
+  });
+
+  it("says nothing about truncation on a complete run", async () => {
+    const presenter = createReplyModel("ok");
+    const service = new LLMService({ model: createReplyModel("unused"), presenter });
+
+    await service.writeFriendlyAnswerAsync("Q", {
+      messages: [new AIMessage("finding")],
+      truncated: false,
+    });
+
+    const prompt = presenter.calls[0]!.messages.at(-1)!.content as string;
+    assert.doesNotMatch(prompt, /cut short/);
   });
 });
