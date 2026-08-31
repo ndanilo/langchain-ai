@@ -17,18 +17,20 @@ npm run test:watch    # re-run on file changes
 tests/
 ├── register.ts           # env defaults (loaded via --import before tests)
 ├── helpers/
-│   └── fake-llm.ts       # shared fakeModel helpers
+│   ├── fake-llm.ts       # shared fakeModel helpers
+│   └── fixtures.ts       # a sample infographic brief
 ├── unit/                 # fast, isolated tests — no network
-│   ├── lib/
-│   │   └── progress.test.ts
-│   └── services/
-│       └── LLMService.test.ts
+│   ├── infographic/      # brief schema, normalisation, prompt composition
+│   ├── lib/              # progress, trace, image store
+│   ├── services/         # LLMService, ImageService
+│   ├── tools/            # datetime tool, toolset wiring
+│   └── pipeline.test.ts  # question -> poster, with every boundary faked
 └── README.md
 ```
 
 | Folder | Purpose |
 | ------ | ------- |
-| `register.ts` | Sets dummy env vars so imports like `config.ts` don't fail |
+| `register.ts` | Sets dummy env vars so imports like `config.ts` don't fail, and points `IMAGE_OUTPUT_DIR` at a temp folder so tests never write into the project |
 | `helpers/` | Reusable fakes and fixtures |
 | `unit/` | Mirrors `src/` — add `unit/graph/`, `unit/controllers/`, etc. |
 
@@ -83,6 +85,19 @@ const model = createReplyModel("Mock reply");
 | Real API | `tests/integration/` only, with env gate |
 
 See [LangChain unit testing docs](https://docs.langchain.com/oss/javascript/langchain/test/unit-testing).
+
+## Mocking the image API (no real generations)
+
+`ImageService` takes its `fetch` through the constructor, so the same injection idea covers
+the image model. Tests hand it canned `Response` objects and assert on what it sent:
+
+```typescript
+const service = new ImageService(async (url, init) => {
+  return new Response(JSON.stringify({ data: [{ b64_json: "..." }] }), { status: 200 });
+});
+```
+
+This is what keeps the suite free: a real generation costs a few cents per call.
 
 ## Adding a test
 

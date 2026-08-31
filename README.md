@@ -11,7 +11,7 @@ Shared tooling (`.cursor/`, git history) lives at the repository root. Work insi
 | [01-langchain-basics](./01-langchain-basics/) | Basic LangChain.js integration: env validation, OpenRouter chat model, agent call, and hello-world LangGraph |
 | [02-langchain-quiz-generator](./02-langchain-quiz-generator/) | Quiz pipeline (in progress): structured fact extraction with Zod + LangGraph |
 | [03-langchain-tool-calling](./03-langchain-tool-calling/) | Tool calling: `createAgent` with a hand-written tool plus Tavily web search, extract, crawl and map |
-| [04-langchain-image-generation](./04-langchain-image-generation/) | Image generation (in progress) |
+| [04-langchain-image-generation](./04-langchain-image-generation/) | Image generation: web research reduced to a structured brief, then drawn as a Portuguese infographic and saved to disk |
 
 ## Adding a new project
 

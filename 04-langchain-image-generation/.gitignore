@@ -1,0 +1,3 @@
+# Generated infographics: build output, not source. Large binaries that would bloat the
+# repository and are never deployed. Keep in sync with IMAGE_OUTPUT_DIR in .env.
+generated-images/
